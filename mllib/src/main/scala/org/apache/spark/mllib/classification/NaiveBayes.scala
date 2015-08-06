@@ -114,6 +114,14 @@ class NaiveBayesModel private[spark] (
     }
   }
 
+  def joitProbabilities(testData: RDD[Vector]): RDD[Vector] = {
+    val bcModel = testData.context.broadcast(this)
+    testData.mapPartitions { iter =>
+      val model = bcModel.value
+      iter.map(model.jointProbabilities)
+    }
+  }
+
   /**
    * Predict posterior class probabilities for a single data point using the model trained.
    *
@@ -127,6 +135,15 @@ class NaiveBayesModel private[spark] (
         posteriorProbabilities(multinomialCalculation(testData))
       case Bernoulli =>
         posteriorProbabilities(bernoulliCalculation(testData))
+    }
+  }
+
+  def jointProbabilities(testData: Vector): Vector = {
+    modelType match {
+      case Multinomial =>
+        multinomialCalculation(testData)
+      case Bernoulli =>
+        bernoulliCalculation(testData)
     }
   }
 
