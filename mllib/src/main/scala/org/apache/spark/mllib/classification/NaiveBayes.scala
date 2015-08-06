@@ -130,12 +130,15 @@ class NaiveBayesModel private[spark] (
    *         in the same order as class labels
    */
   def predictProbabilities(testData: Vector): Vector = {
+    posteriorProbabilities(jointProbabilities(testData).toDense)
+    /*
     modelType match {
       case Multinomial =>
         posteriorProbabilities(multinomialCalculation(testData))
       case Bernoulli =>
         posteriorProbabilities(bernoulliCalculation(testData))
     }
+    */
   }
 
   def jointProbabilities(testData: Vector): Vector = {
