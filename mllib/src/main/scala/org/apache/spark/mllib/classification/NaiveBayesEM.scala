@@ -50,7 +50,7 @@ object NaiveBayesEM {
 
   def train(input: RDD[LabeledPoint], lambda: Double, modelType: String): NaiveBayesModel = {
     require(supportedModelTypes.contains(modelType),
-      s"NaiveBayes was created with an unknown modelType: $modelType.")
+      s"NaiveBayesEM was created with an unknown modelType: $modelType.")
     new NaiveBayesEM(lambda, modelType).run(input)
   }
 }
@@ -280,7 +280,7 @@ class NaiveBayesEM private(
       lp => {
         val label = lp.label
         val features = lp.features
-        val p= model.jointProbabilities(features)(label.toInt-1)
+        val p = model.jointProbabilities(features)(label.toInt-1)
         lik += math.log(p)
       }
     }

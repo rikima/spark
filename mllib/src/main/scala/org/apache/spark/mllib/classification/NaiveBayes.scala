@@ -130,6 +130,15 @@ class NaiveBayesModel private[spark] (
     }
   }
 
+  def jointProbabilities(testData: Vector): Vector = {
+    modelType match {
+      case Multinomial =>
+        multinomialCalculation(testData)
+      case Bernoulli =>
+        bernoulliCalculation(testData)
+    }
+  }
+
   private def multinomialCalculation(testData: Vector) = {
     val prob = thetaMatrix.multiply(testData)
     BLAS.axpy(1.0, piVector, prob)
