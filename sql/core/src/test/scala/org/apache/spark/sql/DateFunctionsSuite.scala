@@ -22,19 +22,18 @@ import java.text.SimpleDateFormat
 
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.test.SharedSQLContext
 import org.apache.spark.unsafe.types.CalendarInterval
 
-class DateFunctionsSuite extends QueryTest {
-  private lazy val ctx = org.apache.spark.sql.test.TestSQLContext
-
-  import ctx.implicits._
+class DateFunctionsSuite extends QueryTest with SharedSQLContext {
+  import testImplicits._
 
   test("function current_date") {
     val df1 = Seq((1, 2), (3, 1)).toDF("a", "b")
     val d0 = DateTimeUtils.millisToDays(System.currentTimeMillis())
     val d1 = DateTimeUtils.fromJavaDate(df1.select(current_date()).collect().head.getDate(0))
     val d2 = DateTimeUtils.fromJavaDate(
-      ctx.sql("""SELECT CURRENT_DATE()""").collect().head.getDate(0))
+      sql("""SELECT CURRENT_DATE()""").collect().head.getDate(0))
     val d3 = DateTimeUtils.millisToDays(System.currentTimeMillis())
     assert(d0 <= d1 && d1 <= d2 && d2 <= d3 && d3 - d0 <= 1)
   }
@@ -44,9 +43,9 @@ class DateFunctionsSuite extends QueryTest {
     val df1 = Seq((1, 2), (3, 1)).toDF("a", "b")
     checkAnswer(df1.select(countDistinct(current_timestamp())), Row(1))
     // Execution in one query should return the same value
-    checkAnswer(ctx.sql("""SELECT CURRENT_TIMESTAMP() = CURRENT_TIMESTAMP()"""),
+    checkAnswer(sql("""SELECT CURRENT_TIMESTAMP() = CURRENT_TIMESTAMP()"""),
       Row(true))
-    assert(math.abs(ctx.sql("""SELECT CURRENT_TIMESTAMP()""").collect().head.getTimestamp(
+    assert(math.abs(sql("""SELECT CURRENT_TIMESTAMP()""").collect().head.getTimestamp(
       0).getTime - System.currentTimeMillis()) < 5000)
   }
 
@@ -89,7 +88,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdf.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(date_format("a", "y"), date_format("b", "y"), date_format("c", "y")),
+      df.select(date_format($"a", "y"), date_format($"b", "y"), date_format($"c", "y")),
       Row("2015", "2015", "2013"))
 
     checkAnswer(
@@ -101,7 +100,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdfDate.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(year("a"), year("b"), year("c")),
+      df.select(year($"a"), year($"b"), year($"c")),
       Row(2015, 2015, 2013))
 
     checkAnswer(
@@ -115,7 +114,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdfDate.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(quarter("a"), quarter("b"), quarter("c")),
+      df.select(quarter($"a"), quarter($"b"), quarter($"c")),
       Row(2, 2, 4))
 
     checkAnswer(
@@ -127,7 +126,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdfDate.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(month("a"), month("b"), month("c")),
+      df.select(month($"a"), month($"b"), month($"c")),
       Row(4, 4, 4))
 
     checkAnswer(
@@ -139,7 +138,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdfDate.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(dayofmonth("a"), dayofmonth("b"), dayofmonth("c")),
+      df.select(dayofmonth($"a"), dayofmonth($"b"), dayofmonth($"c")),
       Row(8, 8, 8))
 
     checkAnswer(
@@ -151,7 +150,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdfDate.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(dayofyear("a"), dayofyear("b"), dayofyear("c")),
+      df.select(dayofyear($"a"), dayofyear($"b"), dayofyear($"c")),
       Row(98, 98, 98))
 
     checkAnswer(
@@ -163,7 +162,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdf.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(hour("a"), hour("b"), hour("c")),
+      df.select(hour($"a"), hour($"b"), hour($"c")),
       Row(0, 13, 13))
 
     checkAnswer(
@@ -175,7 +174,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdf.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(minute("a"), minute("b"), minute("c")),
+      df.select(minute($"a"), minute($"b"), minute($"c")),
       Row(0, 10, 10))
 
     checkAnswer(
@@ -187,7 +186,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdf.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(second("a"), second("b"), second("c")),
+      df.select(second($"a"), second($"b"), second($"c")),
       Row(0, 15, 15))
 
     checkAnswer(
@@ -199,7 +198,7 @@ class DateFunctionsSuite extends QueryTest {
     val df = Seq((d, sdfDate.format(d), ts)).toDF("a", "b", "c")
 
     checkAnswer(
-      df.select(weekofyear("a"), weekofyear("b"), weekofyear("c")),
+      df.select(weekofyear($"a"), weekofyear($"b"), weekofyear($"c")),
       Row(15, 15, 15))
 
     checkAnswer(

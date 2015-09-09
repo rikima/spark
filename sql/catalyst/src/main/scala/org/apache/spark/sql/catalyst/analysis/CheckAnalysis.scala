@@ -47,6 +47,7 @@ trait CheckAnalysis {
     // We transform up and order the rules so as to catch the first possible failure instead
     // of the result of cascading resolution failures.
     plan.foreachUp {
+      case p if p.analyzed => // Skip already analyzed sub-plans
 
       case operator: LogicalPlan =>
         operator transformExpressionsUp {
@@ -130,13 +131,17 @@ trait CheckAnalysis {
 
           case Sort(orders, _, _) =>
             orders.foreach { order =>
-              order.dataType match {
-                case t: AtomicType => // OK
-                case NullType => // OK
-                case t =>
-                  failAnalysis(s"Sorting is not supported for columns of type ${t.simpleString}")
+              if (!RowOrdering.isOrderable(order.dataType)) {
+                failAnalysis(
+                  s"sorting is not supported for columns of type ${order.dataType.simpleString}")
               }
             }
+
+          case s @ SetOperation(left, right) if left.output.length != right.output.length =>
+            failAnalysis(
+              s"${s.nodeName} can only be performed on tables with the same number of columns, " +
+               s"but the left table has ${left.output.length} columns and the right has " +
+               s"${right.output.length}")
 
           case _ => // Fallbacks to the following checks
         }
@@ -181,5 +186,7 @@ trait CheckAnalysis {
         }
     }
     extendedCheckRules.foreach(_(plan))
+
+    plan.foreach(_.setAnalyzed())
   }
 }
